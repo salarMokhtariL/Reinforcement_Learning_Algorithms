@@ -1,96 +1,136 @@
-# Multi-Armed Bandit
+# Chapter 2: Multi-Armed Bandit
 
-## Overview
+## In this Chapter
+- **Fundamentals of the Markov Property**
+- **Understanding the Multi-Armed Bandit (MAB) Problem**
+- **The Exploration-Exploitation Dilemma**
+- **The ε-Greedy Algorithm**
+- **Upper Confidence Bounds (UCB) Algorithm**
+- **Thompson Sampling Algorithm**
 
-The **Multi-Armed Bandit (MAB)** problem is a classic problem in reinforcement learning and decision-making under uncertainty. It represents a scenario where an agent must choose between multiple options, each associated with uncertain rewards, to maximize cumulative reward over time. The MAB problem serves as a foundation for many algorithms and strategies used in various fields, such as finance, healthcare, and online marketing.
+## Aim of this Chapter
+The aim of this chapter is to provide a comprehensive understanding of the Multi-Armed Bandit problem as a foundational concept in Reinforcement Learning (RL). We will explore various algorithms designed to navigate the challenges posed by the MAB problem, emphasizing the exploration-exploitation trade-off.
 
-## Table of Contents
+---
 
-1. [Understanding the Multi-Armed Bandit Problem](#understanding-the-multi-armed-bandit-problem)
-   - [Problem Formulation](#problem-formulation)
-   - [Regret](#regret)
-2. [Strategies for Solving the MAB Problem](#strategies-for-solving-the-mab-problem)
-   - [ε-Greedy Algorithm](#ε-greedy-algorithm)
-   - [Upper Confidence Bounds (UCB) Algorithm](#upper-confidence-bounds-ucb-algorithm)
-   - [Thompson Sampling](#thompson-sampling)
-3. [Performance Evaluation](#performance-evaluation)
-4. [Applications of the Multi-Armed Bandit Problem](#applications-of-the-multi-armed-bandit-problem)
-5. [Conclusion](#conclusion)
-6. [Contribution](#contribution)
+### 1. Fundamentals of the Markov Property
+The **Markov property** is a foundational concept in stochastic processes that asserts that the future state of a system is independent of its past states given its present state. This can be mathematically expressed as:
 
-## Understanding the Multi-Armed Bandit Problem
+$$
+P(S_{t+1} | S_t, S_{t-1}, \ldots, S_0) = P(S_{t+1} | S_t)
+$$
 
-The MAB problem can be likened to a casino with multiple slot machines, each having a different probability of winning. Your objective as a player is to maximize your winnings over a series of plays, but you do not initially know which machine offers the best payout. This situation exemplifies the balance between **exploration** (trying different machines to gather information) and **exploitation** (sticking with the machine that appears to give the best returns).
+In the context of the Multi-Armed Bandit problem, this property simplifies decision-making by indicating that the choice of arm at time \( t \) should depend solely on the current estimates of the arms’ rewards, rather than on the history of past selections.
 
-### Problem Formulation
+### 2. Understanding the Multi-Armed Bandit (MAB) Problem
+The **Multi-Armed Bandit problem** is a classic dilemma faced by a decision-maker who must choose between \( K \) different actions (or arms), each associated with an unknown probability distribution of rewards. The challenge lies in maximizing the cumulative reward over a finite time horizon \( T \).
 
-In formal terms, the MAB problem can be described using the following variables:
-- Let \( k \) be the number of arms (slot machines).
-- Let \( X_i \) be the reward obtained from arm \( i \) during a play.
-- Let \( \mu_i \) be the expected average reward of arm \( i \).
+- **Mathematical Formulation**:
+  - Let \( X_{t,k} \) denote the reward received from arm \( k \) at time \( t \). The expected reward for each arm is given by:
 
-The total reward obtained over \( T \) rounds of play can be expressed mathematically as:
-\[
-R(T) = \sum_{t=1}^{T} X_{A_t}
-\]
-where \( A_t \) is the arm chosen at time \( t \).
+  $$
+  \mu_k = \mathbb{E}[X_{t,k}]
+  $$
 
-### Regret
+  - The goal is to maximize the total reward over \( T \) trials:
 
-To evaluate the performance of an agent in the MAB problem, we can measure its **regret**. Regret quantifies the loss of potential reward compared to an optimal strategy that always selects the best arm. It is defined as:
-\[
-R(T) = T \cdot \max_{i}(\mu_i) - \sum_{t=1}^{T} X_{A_t}
-\]
-where \( \max_{i}(\mu_i) \) is the highest average reward among all arms. The goal of a good MAB algorithm is to minimize this regret over time.
+  $$
+  R_T = \sum_{t=1}^{T} X_{t, A_t}
+  $$
 
-## Strategies for Solving the MAB Problem
+  where \( A_t \) is the arm selected at time \( t \).
 
-Various strategies have been developed to effectively tackle the MAB problem by balancing exploration and exploitation. Below are three popular approaches:
+This problem is often framed as a trade-off between gathering information about the arms (exploration) and leveraging known information to maximize immediate rewards (exploitation).
 
-### ε-Greedy Algorithm
+### 3. The Exploration-Exploitation Dilemma
+The exploration-exploitation dilemma encapsulates the fundamental challenge in the MAB problem. 
 
-The **ε-greedy algorithm** is one of the simplest strategies. It works as follows:
-- With a small probability \( \epsilon \) (e.g., 0.1), the agent randomly selects any arm to explore (this encourages exploration).
-- With a probability of \( 1 - \epsilon \), the agent chooses the arm that currently has the highest estimated reward (this encourages exploitation).
+- **Exploitation** refers to selecting the arm that currently appears to yield the highest expected reward:
 
-This method ensures that the agent explores new options occasionally while mostly relying on the best-known arm.
+$$
+A_t = \arg\max_k \hat{\mu}_k
+$$
 
-### Upper Confidence Bounds (UCB) Algorithm
+- **Exploration** involves trying arms that have not been selected frequently enough to gain more reliable estimates of their rewards. 
 
-The **UCB algorithm** takes a more analytical approach. It selects arms based on both their estimated rewards and the uncertainty around those estimates. The algorithm chooses the arm \( i \) that maximizes the following expression:
-\[
-UCB_i(t) = Q_i(t) + c \cdot \sqrt{\frac{\ln(t)}{T_i(t)}}
-\]
-where:
-- \( Q_i(t) \) is the estimated average reward of arm \( i \).
-- \( T_i(t) \) is the number of times arm \( i \) has been played up to time \( t \).
-- \( c \) is a constant that controls the level of exploration.
+Finding an optimal balance between these two strategies is critical. Too much exploitation can lead to suboptimal rewards, while excessive exploration can hinder reward accumulation.
 
-This method effectively encourages exploration of less-frequented arms while still focusing on the arms that appear to have high rewards.
+### 4. The ε-Greedy Algorithm
+The **ε-greedy algorithm** is a simple yet effective strategy to address the exploration-exploitation dilemma. 
 
-### Thompson Sampling
+- **Algorithm Description**:
+  - With probability \( \epsilon \) (where \( 0 < \epsilon < 1 \)), a random arm is chosen:
 
-**Thompson Sampling** employs a Bayesian approach to manage uncertainty. Here’s how it works:
-1. For each arm, maintain a probability distribution that models the uncertainty of its expected reward.
-2. At each time step, sample a value from each arm’s distribution.
-3. Select the arm with the highest sampled value.
+  $$
+  A_t \sim \text{Uniform}(1, K)
+  $$
 
-This method naturally balances exploration and exploitation, as it favors arms with higher uncertainty in their reward estimates.
+  - With probability \( 1 - \epsilon \), the arm with the highest estimated reward is selected:
 
-## Performance Evaluation
+  $$
+  A_t = \arg\max_k \hat{\mu}_k
+  $$
 
-The performance of MAB algorithms is often evaluated based on their **regret**. A well-designed algorithm will achieve sublinear regret, which means that the regret increases slower than linearly with the number of trials \( T \). This indicates that the agent is becoming more efficient in selecting the best arm over time.
+The parameter \( \epsilon \) controls the degree of exploration. A smaller \( \epsilon \) favors exploitation, while a larger \( \epsilon \) promotes exploration.
 
-## Applications of the Multi-Armed Bandit Problem
+- **Advantages and Disadvantages**:
+  - **Advantages**: The ε-greedy approach is straightforward to implement and understand, making it suitable for various applications.
+  - **Disadvantages**: Choosing an appropriate \( \epsilon \) can be challenging, and the fixed exploration rate may not adapt well to changing environments.
 
-The MAB framework has broad applicability in many fields, including:
+### 5. Upper Confidence Bounds (UCB) Algorithm
+The **UCB algorithm** offers a more sophisticated approach by incorporating uncertainty into the decision-making process. It selects arms based on a confidence interval that balances exploration and exploitation.
 
-- **Online Advertising**: Optimizing which ads to display to maximize user engagement and conversion rates.
-- **Clinical Trials**: Efficiently allocating patients to different treatments to identify the most effective one.
-- **A/B Testing**: Testing different versions of a product or webpage to determine which variant performs best with users.
+- **Mathematical Formulation**:
+  - The UCB for arm \( k \) at time \( t \) is defined as:
 
-In each of these applications, the ability to balance exploration and exploitation leads to better decision-making and improved outcomes.
+  $$
+  UCB_k(t) = \hat{\mu}_k + \sqrt{\frac{2 \ln t}{n_k}}
+  $$
 
-## Conclusion
+  where:
+  - \( \hat{\mu}_k \) is the empirical mean reward of arm \( k \).
+  - \( n_k \) is the count of how many times arm \( k \) has been selected.
+  - The term \( \sqrt{\frac{2 \ln t}{n_k}} \) serves as a measure of uncertainty, encouraging selection of less-explored arms.
 
-The Multi-Armed Bandit problem serves as a foundational concept in reinforcement learning, illustrating the critical trade-off between exploration and exploitation. By employing strategies like the ε-greedy algorithm, UCB, and Thompson Sampling, agents can effectively navigate uncertainty and make informed decisions. As research in this area continues to grow, the MAB framework will remain an essential tool for optimizing choices in various practical applications.
+- **Performance**: The UCB algorithm adapts its exploration dynamically based on the uncertainty associated with each arm's estimated reward, effectively balancing the two competing objectives. It tends to perform well in a variety of scenarios, especially when the rewards are stationary.
+
+### 6. Thompson Sampling Algorithm
+**Thompson Sampling** is a Bayesian approach to solving the MAB problem that provides a robust framework for managing uncertainty.
+
+- **Bayesian Model**: Each arm's reward distribution is modeled using a prior, typically a Beta distribution for binary outcomes:
+
+$$
+\theta_k \sim \text{Beta}(\alpha_k, \beta_k)
+$$
+
+where \( \alpha_k \) and \( \beta_k \) are hyperparameters representing the number of successes and failures, respectively.
+
+- **Sampling Process**:
+  - At each time step \( t \), sample from the posterior distribution of each arm:
+
+$$
+\theta_k \sim \text{Beta}(\alpha_k, \beta_k)
+$$
+
+  - Select the arm with the highest sampled value:
+
+$$
+A_t = \arg\max_k \theta_k
+$$
+
+- **Updating the Parameters**: After observing the reward \( X_{t,k} \):
+
+$$
+\begin{cases}
+\alpha_k \leftarrow \alpha_k + 1, & \text{if } X_{t,k} = 1 \\
+\beta_k \leftarrow \beta_k + 1, & \text{if } X_{t,k} = 0
+\end{cases}
+$$
+
+- **Comparison with Other Algorithms**: Thompson Sampling has been shown to outperform ε-greedy and UCB algorithms in many settings, particularly in non-stationary environments, due to its adaptive nature and ability to capture the uncertainty of rewards.
+
+---
+
+### Conclusion
+This chapter provided a detailed examination of the Multi-Armed Bandit problem, highlighting its relevance in Reinforcement Learning. We explored various strategies—ε-greedy, UCB, and Thompson Sampling—each offering distinct advantages in addressing the exploration-exploitation trade-off. A thorough understanding of these algorithms lays the groundwork for tackling more complex RL challenges, demonstrating the foundational role of the MAB problem in the broader context of decision-making and learning.
+
